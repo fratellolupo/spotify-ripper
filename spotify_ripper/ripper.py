@@ -381,15 +381,22 @@ class Ripper(threading.Thread):
         base_dir = norm_path(args.directory[0]) if args.directory != None else os.getcwd()
 
         track_artist = to_ascii(args, escape_filename_part(track.artists[0].name))
-        album_artist = self.album_artist if self.album_artist is not None else track_artist
+        album_artist = to_ascii(args, escape_filename_part(track.album.artist.name))
         album = to_ascii(args, escape_filename_part(track.album.name))
+        if track_artist==album_artist:
+            track_artist=""
+        else:
+            track_artist="-"+track_artist
+
         track_name = to_ascii(args, escape_filename_part(track.name))
         year = str(track.album.year)
         extension = args.output_type
         idx_str = str(idx).zfill(self.idx_digits)
         track_num = str(track.index)
         disc_num = str(track.disc)
-
+        album_browser = track.album.browse()
+        album_browser.load()
+        track_num = str(track.index).zfill(len(str(len(album_browser.tracks))))
         audio_file = args.format[0].strip()
         tags = {
             "track_artist": track_artist,
