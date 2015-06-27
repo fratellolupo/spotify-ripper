@@ -372,15 +372,22 @@ class Ripper(threading.Thread):
         base_dir = norm_path(args.directory[0]) if args.directory != None else os.getcwd()
 
         track_artist = to_ascii(args, escape_filename_part(track.artists[0].name))
-        album_artist = self.album_artist if self.album_artist is not None else track_artist
+        album_artist = to_ascii(args, escape_filename_part(track.album.artist.name))
         album = to_ascii(args, escape_filename_part(track.album.name))
+        if track_artist==album_artist:
+            track_artist=""
+        else:
+            track_artist="-"+track_artist
+
         track_name = to_ascii(args, escape_filename_part(track.name))
         year = str(track.album.year)
         extension = args.output_type
         idx_str = str(idx).zfill(self.idx_digits)
         track_num = str(track.index)
         disc_num = str(track.disc)
-
+        album_browser = track.album.browse()
+        album_browser.load()
+        track_num = str(track.index).zfill(len(str(len(album_browser.tracks))))
         audio_file = args.format[0].strip()
         tags = {
             "track_artist": track_artist,
@@ -413,7 +420,7 @@ class Ripper(threading.Thread):
             path_tokens = [truncate(token, 255) for token in path_tokens]
             return os.pathsep.join(path_tokens)
 
-        def trunacte_file_name(file_name):
+        def truncate_file_name(file_name):
             tokens = file_name.rsplit(os.extsep, 1)
             if len(tokens) > 1:
                 tokens[0] = truncate(tokens[0], 255 - len(tokens[1]) - 1)
@@ -424,9 +431,9 @@ class Ripper(threading.Thread):
         # ensure each component in path is no more than 255 chars long
         tokens = audio_file.rsplit(os.pathsep, 1)
         if len(tokens) > 1:
-            audio_file = os.path.join(truncate_dir_path(tokens[0]), trunacte_file_name(tokens[1]))
+            audio_file = os.path.join(truncate_dir_path(tokens[0]), truncate_file_name(tokens[1]))
         else:
-            audio_file = trunacte_file_name(tokens[0])
+            audio_file = truncate_file_name(tokens[0])
 
         # prepend base_dir
         audio_file = to_ascii(args, os.path.join(base_dir, audio_file))
